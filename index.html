@@ -156,20 +156,26 @@
         
         // 竞价事件
         bidBtn.addEventListener('click', async function() {
-            if (!currentProduct) {
-                showMessage('请先选择商品', false);
-                return;
-            }
-            
-            const bidValue = parseFloat(bidAmount.value);
-            
-            try {
-                await biddingManager.placeBid(currentProduct.id, bidValue);
-                bidAmount.value = '';
-                showMessage(`竞价成功！您现在是最高竞价人。`, true);
-            } catch (error) {
-                showMessage('竞价失败: ' + error.message, false);
-            }
+          // 使用 biddingManager 中的当前选中商品
+          if (!biddingManager.currentSelectedProduct) {
+            showMessage('请先选择商品', false);
+            return;
+          }
+          
+          const bidValue = parseFloat(bidAmount.value);
+          
+          if (!bidValue || bidValue <= 0) {
+            showMessage('请输入有效的竞价金额', false);
+            return;
+          }
+          
+          try {
+            await biddingManager.placeBid(biddingManager.currentSelectedProduct.id, bidValue);
+            bidAmount.value = '';
+            showMessage(`竞价成功！您现在是最高竞价人。`, true);
+          } catch (error) {
+            showMessage('竞价失败: ' + error.message, false);
+          }
         });
         
         // 显示商品列表区域
