@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多商品竞价系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #4b6cb7, #182848);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+        }
+        
+        .content {
+            background-color: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .login-section, .products-section, .bidding-section {
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .products-section, .bidding-section {
+            display: none;
+        }
+        
+        h2 {
+            color: #182848;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #4b6cb7;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #4b6cb7, #182848);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-logout {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+        }
+        
+        .btn-back {
+            background: linear-gradient(to right, #6c757d, #495057);
+            margin-right: 10px;
+        }
+        
+        .user-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4b6cb7;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-image {
+            height: 180px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #4b6cb7;
+        }
+        
+        .product-details {
+            padding: 20px;
+        }
+        
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #182848;
+        }
+        
+        .product-price {
+            font-size: 22px;
+            color: #e74c3c;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .product-bidder {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .product-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .product-info h3 {
+            color: #182848;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .info-value {
+            color: #182848;
+            font-weight: 600;
+        }
+        
+        .current-price {
+            font-size: 28px;
+            color: #e74c3c;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .account-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .account-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .account-card:hover {
+            border-color: #4b6cb7;
+            transform: translateY(-3px);
+        }
+        
+        .account-name {
+            font-weight: 600;
+            color: #182848;
+            margin-bottom: 5px;
+        }
+        
+        .account-details {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .bidding-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .bidding-actions .btn {
+            flex: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .bidding-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>多商品竞价系统</h1>
+            <p>选择您感兴趣的商品参与竞拍</p>
+        </div>
+        
+        <div class="content">
+            <!-- 登录区域 -->
+            <div class="login-section" id="loginSection">
+                <h2>用户登录</h2>
+                <p>请选择以下预设账号登录：</p>
+                
+                <div class="account-list" id="accountList">
+                    <!-- 账号将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="form-group" style="margin-top: 30px;">
+                    <label for="username">或手动输入用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button class="btn" id="loginBtn">登录</button>
+            </div>
+            
+            <!-- 商品列表区域 -->
+            <div class="products-section" id="productsSection">
+                <div class="user-info" id="userInfo"></div>
+                <h2>商品列表</h2>
+                <p>点击商品查看详情并参与竞价</p>
+                
+                <div class="products-grid" id="productsGrid">
+                    <!-- 商品将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="bidding-actions">
+                    <button class="btn btn-logout" id="logoutBtn">退出登录</button>
+                </div>
+            </div>
+            
+            <!-- 竞价区域 -->
+            <div class="bidding-section" id="biddingSection">
+                <div class="user-info" id="biddingUserInfo"></div>
+                
+                <div class="product-info" id="productInfo">
+                    <!-- 商品详情将通过JavaScript动态生成 -->
+                </div>
+                
+                <h2>参与竞价</h2>
+                <div class="form-group">
+                    <label for="bidAmount">竞价金额 (¥)</label>
+                    <input type="number" id="bidAmount" placeholder="请输入竞价金额">
+                </div>
+                
+                <div class="bidding-actions">
+                    <button class="btn btn-back" id="backBtn">返回商品列表</button>
+                    <button class="btn" id="bidBtn">提交竞价</button>
+                </div>
+                
+                <div class="message hidden" id="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 固定账号列表
+        const fixedAccounts = [
+            { username: "竞拍者1", password: "pass123", id: "BIDDER_001" },
+            { username: "竞拍者2", password: "pass123", id: "BIDDER_002" },
+            { username: "竞拍者3", password: "pass123", id: "BIDDER_003" },
+            { username: "收藏家1", password: "pass123", id: "COLLECTOR_001" },
+            { username: "收藏家2", password: "pass123", id: "COLLECTOR_002" },
+            { username: "投资者1", password: "pass123", id: "INVESTOR_001" }
+        ];
+        
+        // 商品列表
+        const products = [
+            { 
+                id: 1, 
+                name: "限量版艺术品", 
+                description: "著名艺术家限量创作，全球仅10件",
+                startPrice: 1000, 
+                minIncrement: 100,
+                image: "🎨"
+            },
+            { 
+                id: 2, 
+                name: "古董手表", 
+                description: "1920年代瑞士制表工艺，保存完好",
+                startPrice: 2500, 
+                minIncrement: 200,
+                image: "⌚"
+            },
+            { 
+                id: 3, 
+                name: "稀有邮票", 
+                description: "19世纪错版邮票，极具收藏价值",
+                startPrice: 800, 
+                minIncrement: 50,
+                image: "📮"
+            },
+            { 
+                id: 4, 
+                name: "签名篮球", 
+                description: "NBA传奇球星亲笔签名篮球",
+                startPrice: 1200, 
+                minIncrement: 100,
+                image: "🏀"
+            },
+            { 
+                id: 5, 
+                name: "古典吉他", 
+                description: "手工制作，音色优美，附原装琴盒",
+                startPrice: 1800, 
+                minIncrement: 150,
+                image: "🎸"
+            },
+            { 
+                id: 6, 
+                name: "翡翠手镯", 
+                description: "天然A货翡翠，色泽通透，工艺精湛",
+                startPrice: 3500, 
+                minIncrement: 300,
+                image: "💎"
+            },
+            { 
+                id: 7, 
+                name: "绝版书籍", 
+                description: "首版印刷，作者亲笔签名，保存完好",
+                startPrice: 600, 
+                minIncrement: 50,
+                image: "📚"
+            },
+            { 
+                id: 8, 
+                name: "复古相机", 
+                description: "莱卡M3，经典机型，功能正常",
+                startPrice: 4200, 
+                minIncrement: 400,
+                image: "📷"
+            },
+            { 
+                id: 9, 
+                name: "威士忌收藏", 
+                description: "50年陈酿苏格兰威士忌，原装木盒",
+                startPrice: 5800, 
+                minIncrement: 500,
+                image: "🥃"
+            },
+            { 
+                id: 10, 
+                name: "手工地毯", 
+                description: "波斯手工编织，丝绸材质，图案精美",
+                startPrice: 3200, 
+                minIncrement: 250,
+                image: "🧵"
+            },
+            { 
+                id: 11, 
+                name: "青铜雕塑", 
+                description: "现代艺术家作品，限量编号8/20",
+                startPrice: 4800, 
+                minIncrement: 400,
+                image: "🗿"
+            },
+            { 
+                id: 12, 
+                name: "老爷车模型", 
+                description: "1:8比例，全金属制作，细节精致",
+                startPrice: 1500, 
+                minIncrement: 120,
+                image: "🚗"
+            }
+        ];
+        
+        // 初始化数据
+        let currentUser = null;
+        let currentProduct = null;
+        let productsData = {};
+        
+        // DOM元素
+        const loginSection = document.getElementById('loginSection');
+        const productsSection = document.getElementById('productsSection');
+        const biddingSection = document.getElementById('biddingSection');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const backBtn = document.getElementById('backBtn');
+        const bidBtn = document.getElementById('bidBtn');
+        const userInfo = document.getElementById('userInfo');
+        const biddingUserInfo = document.getElementById('biddingUserInfo');
+        const productsGrid = document.getElementById('productsGrid');
+        const productInfo = document.getElementById('productInfo');
+        const bidAmount = document.getElementById('bidAmount');
+        const message = document.getElementById('message');
+        const accountList = document.getElementById('accountList');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        // 初始化账号列表
+        function initAccountList() {
+            accountList.innerHTML = '';
+            fixedAccounts.forEach(account => {
+                const accountCard = document.createElement('div');
+                accountCard.className = 'account-card';
+                accountCard.innerHTML = `
+                    <div class="account-name">${account.username}</div>
+                    <div class="account-details">ID: ${account.id} | 密码: ${account.password}</div>
+                `;
+                accountCard.addEventListener('click', () => {
+                    usernameInput.value = account.username;
+                    passwordInput.value = account.password;
+                });
+                accountList.appendChild(accountCard);
+            });
+        }
+        
+        // 检查本地存储中是否有用户数据
+        function checkLocalStorage() {
+            const savedUser = localStorage.getItem('currentUser');
+            const savedProductsData = localStorage.getItem('productsData');
+            
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showProductsSection();
+            }
+            
+            if (savedProductsData) {
+                productsData = JSON.parse(savedProductsData);
+            } else {
+                // 初始化产品数据
+                products.forEach(product => {
+                    productsData[product.id] = {
+                        currentPrice: product.startPrice,
+                        currentBidder: null,
+                        minIncrement: product.minIncrement
+                    };
+                });
+                localStorage.setItem('productsData', JSON.stringify(productsData));
+            }
+        }
+        
+        // 显示商品列表区域
+        function showProductsSection() {
+            loginSection.style.display = 'none';
+            biddingSection.style.display = 'none';
+            productsSection.style.display = 'block';
+            userInfo.textContent = `欢迎，${currentUser.username} (ID: ${currentUser.id})`;
+            renderProductsGrid();
+        }
+        
+        // 显示竞价区域
+        function showBiddingSection(product) {
+            currentProduct = product;
+            productsSection.style.display = 'none';
+            biddingSection.style.display = 'block';
+            biddingUserInfo.textContent = `欢迎，${currentUser.username} (ID: ${currentUser.id})`;
+            renderProductInfo();
+            bidAmount.value = '';
+            message.classList.add('hidden');
+        }
+        
+        // 显示登录区域
+        function showLoginSection() {
+            productsSection.style.display = 'none';
+            biddingSection.style.display = 'none';
+            loginSection.style.display = 'block';
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            usernameInput.value = '';
+            passwordInput.value = '';
+        }
+        
+        // 渲染商品网格
+        function renderProductsGrid() {
+            productsGrid.innerHTML = '';
+            products.forEach(product => {
+                const productData = productsData[product.id];
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-image">${product.image}</div>
+                    <div class="product-details">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">¥${productData.currentPrice.toLocaleString()}</div>
+                        <div class="product-bidder">当前竞价: ${productData.currentBidder ? productData.currentBidder.username : '暂无'}</div>
+                    </div>
+                `;
+                productCard.addEventListener('click', () => {
+                    showBiddingSection(product);
+                });
+                productsGrid.appendChild(productCard);
+            });
+        }
+        
+        // 渲染商品详情
+        function renderProductInfo() {
+            const productData = productsData[currentProduct.id];
+            productInfo.innerHTML = `
+                <h3>${currentProduct.name}</h3>
+                <div class="info-row">
+                    <span class="info-label">商品描述:</span>
+                    <span class="info-value">${currentProduct.description}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">起拍价格:</span>
+                    <span class="info-value">¥${currentProduct.startPrice.toLocaleString()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">最低加价:</span>
+                    <span class="info-value">¥${currentProduct.minIncrement.toLocaleString()}</span>
+                </div>
+                <div class="current-price">
+                    当前价格: <span id="currentPrice">¥${productData.currentPrice.toLocaleString()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">当前竞价人:</span>
+                    <span class="info-value" id="currentBidder">${productData.currentBidder ? 
+                        `${productData.currentBidder.username} (ID: ${productData.currentBidder.id})` : '暂无'}</span>
+                </div>
+            `;
+        }
+        
+        // 显示消息
+        function showMessage(text, isSuccess) {
+            message.textContent = text;
+            message.className = `message ${isSuccess ? 'success' : 'error'}`;
+            message.classList.remove('hidden');
+            
+            setTimeout(() => {
+                message.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // 登录事件
+        loginBtn.addEventListener('click', function() {
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            
+            if (!username || !password) {
+                showMessage('请输入用户名和密码', false);
+                return;
+            }
+            
+            // 验证账号密码
+            const validAccount = fixedAccounts.find(account => 
+                account.username === username && account.password === password);
+            
+            if (!validAccount) {
+                showMessage('用户名或密码错误', false);
+                return;
+            }
+            
+            currentUser = {
+                id: validAccount.id,
+                username: validAccount.username
+            };
+            
+            // 保存到本地存储
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            showProductsSection();
+            showMessage('登录成功！', true);
+        });
+        
+        // 退出登录事件
+        logoutBtn.addEventListener('click', function() {
+            showLoginSection();
+            showMessage('已退出登录', true);
+        });
+        
+        // 返回商品列表事件
+        backBtn.addEventListener('click', function() {
+            showProductsSection();
+        });
+        
+        // 竞价事件
+        bidBtn.addEventListener('click', function() {
+            const bidValue = parseFloat(bidAmount.value);
+            const productData = productsData[currentProduct.id];
+            
+            if (!bidValue || bidValue <= 0) {
+                showMessage('请输入有效的竞价金额', false);
+                return;
+            }
+            
+            // 验证竞价规则
+            if (bidValue <= productData.currentPrice) {
+                showMessage(`竞价金额必须高于当前价格 ¥${productData.currentPrice}`, false);
+                return;
+            }
+            
+            if (bidValue - productData.currentPrice < productData.minIncrement) {
+                showMessage(`加价幅度必须至少为 ¥${currentProduct.minIncrement}`, false);
+                return;
+            }
+            
+            // 更新竞价信息
+            productData.currentPrice = bidValue;
+            productData.currentBidder = {
+                id: currentUser.id,
+                username: currentUser.username
+            };
+            
+            // 保存到本地存储
+            localStorage.setItem('productsData', JSON.stringify(productsData));
+            
+            // 更新显示
+            renderProductInfo();
+            bidAmount.value = '';
+            
+            showMessage(`竞价成功！您现在是最高竞价人。`, true);
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initAccountList();
+            checkLocalStorage();
+        });
+    </script>
+</body>
+</html>
