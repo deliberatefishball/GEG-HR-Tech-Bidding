@@ -4,6 +4,7 @@ class BiddingManager {
     this.usersRef = database.ref('users');
     this.currentUser = null;
     this.products = [];
+    this.currentSelectedProduct = null; // 添加当前选中商品
     
     // 初始化数据监听
     this.initDataListeners();
@@ -20,6 +21,15 @@ class BiddingManager {
           ...productsData[key]
         }));
         this.renderProducts();
+        
+        // 如果当前选中的商品有更新，刷新显示
+        if (this.currentSelectedProduct) {
+          const updatedProduct = this.products.find(p => p.id === this.currentSelectedProduct.id);
+          if (updatedProduct) {
+            this.currentSelectedProduct = updatedProduct;
+            this.renderProductInfo();
+          }
+        }
       }
     });
   }
@@ -47,6 +57,7 @@ class BiddingManager {
   // 用户登出
   logout() {
     this.currentUser = null;
+    this.currentSelectedProduct = null;
   }
   
   // 提交竞价
@@ -150,7 +161,7 @@ class BiddingManager {
       </div>
     `;
     
-    // 更新当前选中的商品 - 修复：确保全局可用
+    // 更新当前选中的商品
     this.currentSelectedProduct = product;
     
     // 显示竞价区域
@@ -162,6 +173,39 @@ class BiddingManager {
     if (biddingUserInfo && this.currentUser) {
       biddingUserInfo.textContent = `欢迎，${this.currentUser.username} (ID: ${this.currentUser.id})`;
     }
+  }
+  
+  // 渲染产品信息（用于实时更新）
+  renderProductInfo() {
+    if (!this.currentSelectedProduct) return;
+    
+    const productInfo = document.getElementById('productInfo');
+    if (!productInfo) return;
+    
+    const product = this.currentSelectedProduct;
+    
+    productInfo.innerHTML = `
+      <h3>${product.name}</h3>
+      <div class="info-row">
+        <span class="info-label">商品描述:</span>
+        <span class="info-value">${product.description || '暂无描述'}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">起拍价格:</span>
+        <span class="info-value">¥${product.startPrice.toLocaleString()}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">最低加价:</span>
+        <span class="info-value">¥${product.minIncrement.toLocaleString()}</span>
+      </div>
+      <div class="current-price">
+        当前价格: <span id="currentPrice">¥${product.currentPrice.toLocaleString()}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">当前竞价人:</span>
+        <span class="info-value" id="currentBidder">${product.currentBidder || '暂无'}</span>
+      </div>
+    `;
   }
   
   // 获取产品图片
