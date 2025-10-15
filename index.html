@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时竞价系统 - Firebase版</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>实时竞价系统</h1>
+            <p>基于 Firebase 的实时更新 - 所有用户即时看到价格变化</p>
+            <div class="update-info">
+                数据状态: <span id="dataStatus">已连接</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- 登录区域 -->
+            <div class="login-section" id="loginSection">
+                <h2>用户登录</h2>
+                <p>使用以下预设账号或创建新账号登录：</p>
+                
+                <div class="account-list" id="accountList">
+                    <div class="account-card" data-username="竞拍者1" data-password="pass123">
+                        <div class="account-name">竞拍者1</div>
+                        <div class="account-details">密码: pass123</div>
+                    </div>
+                    <div class="account-card" data-username="竞拍者2" data-password="pass123">
+                        <div class="account-name">竞拍者2</div>
+                        <div class="account-details">密码: pass123</div>
+                    </div>
+                    <div class="account-card" data-username="收藏家" data-password="pass123">
+                        <div class="account-name">收藏家</div>
+                        <div class="account-details">密码: pass123</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button class="btn" id="loginBtn">登录</button>
+            </div>
+            
+            <!-- 商品列表区域 -->
+            <div class="products-section" id="productsSection">
+                <div class="user-info" id="userInfo"></div>
+                <h2>商品列表</h2>
+                <p>点击商品查看详情并参与竞价 - 价格实时更新</p>
+                
+                <div class="products-grid" id="productsGrid">
+                    <!-- 商品将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="bidding-actions">
+                    <button class="btn btn-logout" id="logoutBtn">退出登录</button>
+                </div>
+            </div>
+            
+            <!-- 竞价区域 -->
+            <div class="bidding-section" id="biddingSection">
+                <div class="user-info" id="biddingUserInfo"></div>
+                
+                <div class="product-info" id="productInfo">
+                    <!-- 商品详情将通过JavaScript动态生成 -->
+                </div>
+                
+                <h2>参与竞价</h2>
+                <div class="form-group">
+                    <label for="bidAmount">竞价金额 (¥)</label>
+                    <input type="number" id="bidAmount" placeholder="请输入竞价金额">
+                </div>
+                
+                <div class="bidding-actions">
+                    <button class="btn btn-back" id="backBtn">返回商品列表</button>
+                    <button class="btn" id="bidBtn">提交竞价</button>
+                </div>
+                
+                <div class="message hidden" id="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入配置文件和管理器 -->
+    <script src="firebase-config.js"></script>
+    <script src="bidding-manager.js"></script>
+    
+    <script>
+        // 全局变量
+        let currentProduct = null;
+        
+        // DOM元素
+        const loginSection = document.getElementById('loginSection');
+        const productsSection = document.getElementById('productsSection');
+        const biddingSection = document.getElementById('biddingSection');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const backBtn = document.getElementById('backBtn');
+        const bidBtn = document.getElementById('bidBtn');
+        const userInfo = document.getElementById('userInfo');
+        const biddingUserInfo = document.getElementById('biddingUserInfo');
+        const bidAmount = document.getElementById('bidAmount');
+        const message = document.getElementById('message');
+        const accountCards = document.querySelectorAll('.account-card');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const dataStatus = document.getElementById('dataStatus');
+        
+        // 预设账号点击事件
+        accountCards.forEach(card => {
+            card.addEventListener('click', () => {
+                usernameInput.value = card.dataset.username;
+                passwordInput.value = card.dataset.password;
+            });
+        });
+        
+        // 登录事件
+        loginBtn.addEventListener('click', async function() {
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            
+            if (!username || !password) {
+                showMessage('请输入用户名和密码', false);
+                return;
+            }
+            
+            try {
+                await biddingManager.login(username, password);
+                showProductsSection();
+                showMessage('登录成功！', true);
+            } catch (error) {
+                showMessage('登录失败: ' + error.message, false);
+            }
+        });
+        
+        // 退出登录事件
+        logoutBtn.addEventListener('click', function() {
+            biddingManager.logout();
+            showLoginSection();
+            showMessage('已退出登录', true);
+        });
+        
+        // 返回商品列表事件
+        backBtn.addEventListener('click', function() {
+            showProductsSection();
+        });
+        
+        // 竞价事件
+        bidBtn.addEventListener('click', async function() {
+            if (!currentProduct) {
+                showMessage('请先选择商品', false);
+                return;
+            }
+            
+            const bidValue = parseFloat(bidAmount.value);
+            
+            try {
+                await biddingManager.placeBid(currentProduct.id, bidValue);
+                bidAmount.value = '';
+                showMessage(`竞价成功！您现在是最高竞价人。`, true);
+            } catch (error) {
+                showMessage('竞价失败: ' + error.message, false);
+            }
+        });
+        
+        // 显示商品列表区域
+        function showProductsSection() {
+            loginSection.style.display = 'none';
+            biddingSection.style.display = 'none';
+            productsSection.style.display = 'block';
+            
+            if (biddingManager.currentUser) {
+                userInfo.textContent = `欢迎，${biddingManager.currentUser.username} (ID: ${biddingManager.currentUser.id})`;
+            }
+        }
+        
+        // 显示登录区域
+        function showLoginSection() {
+            productsSection.style.display = 'none';
+            biddingSection.style.display = 'none';
+            loginSection.style.display = 'block';
+            usernameInput.value = '';
+            passwordInput.value = '';
+        }
+        
+        // 显示消息
+        function showMessage(text, isSuccess) {
+            message.textContent = text;
+            message.className = `message ${isSuccess ? 'success' : 'error'}`;
+            message.classList.remove('hidden');
+            
+            setTimeout(() => {
+                message.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // 初始化数据库数据
+        async function initializeDatabase() {
+            // 检查是否已有数据
+            const snapshot = await database.ref('products').once('value');
+            if (snapshot.exists()) {
+                console.log('数据库已有数据，跳过初始化');
+                return;
+            }
+            
+            // 初始化产品数据
+            const products = [
+                { 
+                    id: 1, 
+                    name: "限量版艺术品", 
+                    description: "著名艺术家限量创作，全球仅10件",
+                    startPrice: 1000, 
+                    currentPrice: 1000,
+                    minIncrement: 100,
+                    currentBidder: null,
+                    currentBidderId: null
+                },
+                { 
+                    id: 2, 
+                    name: "古董手表", 
+                    description: "1920年代瑞士制表工艺，保存完好",
+                    startPrice: 2500, 
+                    currentPrice: 2500,
+                    minIncrement: 200,
+                    currentBidder: null,
+                    currentBidderId: null
+                },
+                { 
+                    id: 3, 
+                    name: "稀有邮票", 
+                    description: "19世纪错版邮票，极具收藏价值",
+                    startPrice: 800, 
+                    currentPrice: 800,
+                    minIncrement: 50,
+                    currentBidder: null,
+                    currentBidderId: null
+                },
+                { 
+                    id: 4, 
+                    name: "签名篮球", 
+                    description: "NBA传奇球星亲笔签名篮球",
+                    startPrice: 1200, 
+                    currentPrice: 1200,
+                    minIncrement: 100,
+                    currentBidder: null,
+                    currentBidderId: null
+                }
+            ];
+            
+            // 将产品数据写入数据库
+            for (const product of products) {
+                await database.ref('products').child(product.id).set(product);
+            }
+            
+            console.log('数据库初始化完成');
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化数据库数据
+            initializeDatabase();
+            
+            // 监听连接状态
+            database.ref('.info/connected').on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    dataStatus.textContent = '已连接';
+                    dataStatus.style.color = '#28a745';
+                } else {
+                    dataStatus.textContent = '连接中...';
+                    dataStatus.style.color = '#ffc107';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
