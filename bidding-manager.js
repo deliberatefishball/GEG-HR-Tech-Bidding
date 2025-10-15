@@ -150,12 +150,18 @@ class BiddingManager {
       </div>
     `;
     
-    // 更新全局变量
-    window.currentProduct = product;
+    // 更新当前选中的商品 - 修复：确保全局可用
+    this.currentSelectedProduct = product;
     
     // 显示竞价区域
     document.getElementById('productsSection').style.display = 'none';
     document.getElementById('biddingSection').style.display = 'block';
+    
+    // 更新竞价区域的用户信息
+    const biddingUserInfo = document.getElementById('biddingUserInfo');
+    if (biddingUserInfo && this.currentUser) {
+      biddingUserInfo.textContent = `欢迎，${this.currentUser.username} (ID: ${this.currentUser.id})`;
+    }
   }
   
   // 获取产品图片
